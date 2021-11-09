@@ -57,21 +57,24 @@ class FileSource(Source):
         wrapper = LTTextBoxHorizontal()
         wrapper.add(line)
 
-        y_prior = element._objs[0].y0
+        try:
+            y_prior = element._objs[0].y0
 
-        for letter in element:
-            if isinstance(letter, LTChar):
-                if abs(letter.y0 - y_prior) > 0.05:
-                    # new line, yield wrapper
-                    wrapper.analyze(self.la_params)
-                    yield wrapper
+            for letter in element:
+                if isinstance(letter, LTChar):
+                    if abs(letter.y0 - y_prior) > 0.05:
+                        # new line, yield wrapper
+                        wrapper.analyze(self.la_params)
+                        yield wrapper
 
-                    wrapper = LTTextBoxHorizontal()
-                    line = LTTextLineHorizontal(0)
-                    wrapper.add(line)
-                    y_prior = letter.y0
+                        wrapper = LTTextBoxHorizontal()
+                        line = LTTextLineHorizontal(0)
+                        wrapper.add(line)
+                        y_prior = letter.y0
 
-                line.add(letter)
+                    line.add(letter)
+        except Exception as e:
+            print("exception in handle lt figure mapping:", e)
 
     def split_boxes_by_style(self, container: LTTextContainer) -> Generator[LTTextContainer, LTTextContainer, None]:
         """
