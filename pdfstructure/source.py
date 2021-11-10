@@ -57,21 +57,24 @@ class FileSource(Source):
         wrapper = LTTextBoxHorizontal()
         wrapper.add(line)
 
-        y_prior = element._objs[0].y0
+        try:
+            y_prior = element._objs[0].y0
 
-        for letter in element:
-            if isinstance(letter, LTChar):
-                if abs(letter.y0 - y_prior) > 0.05:
-                    # new line, yield wrapper
-                    wrapper.analyze(self.la_params)
-                    yield wrapper
+            for letter in element:
+                if isinstance(letter, LTChar):
+                    if abs(letter.y0 - y_prior) > 0.05:
+                        # new line, yield wrapper
+                        wrapper.analyze(self.la_params)
+                        yield wrapper
 
-                    wrapper = LTTextBoxHorizontal()
-                    line = LTTextLineHorizontal(0)
-                    wrapper.add(line)
-                    y_prior = letter.y0
+                        wrapper = LTTextBoxHorizontal()
+                        line = LTTextLineHorizontal(0)
+                        wrapper.add(line)
+                        y_prior = letter.y0
 
-                line.add(letter)
+                    line.add(letter)
+        except Exception as e:
+            print("exception in handle lt figure mapping:", e)
 
     def split_boxes_by_style(self, container: LTTextContainer) -> Generator[LTTextContainer, LTTextContainer, None]:
         """
@@ -87,19 +90,22 @@ class FileSource(Source):
         wrapper.page = container.page
         stack = []
         for line in container:
-            size = max([obj.size for obj in itertools.islice(line, 10) if isinstance(obj, LTChar)])
-            if not stack:
-                wrapper.add(line)
-                stack.append(size)
-            else:
-                prior = stack.pop()
-                stack.append(size)
-                diff = abs(prior - size)
-                if diff != 0 and max(prior, size) / min(prior, size) > 1.15:
-                    # break paragraph
-                    yield wrapper
-                    wrapper = LTTextBoxHorizontal()
-                wrapper.add(line)
+            try:
+                size = max([obj.size for obj in itertools.islice(line, 10) if isinstance(obj, LTChar)])
+                if not stack:
+                    wrapper.add(line)
+                    stack.append(size)
+                else:
+                    prior = stack.pop()
+                    stack.append(size)
+                    diff = abs(prior - size)
+                    if diff != 0 and max(prior, size) / min(prior, size) > 1.15:
+                        # break paragraph
+                        yield wrapper
+                        wrapper = LTTextBoxHorizontal()
+                    wrapper.add(line)
+            except Exception as e:
+                print("exception in split_boxes_by_style:", e)
         yield wrapper
 
     def read(self, override_la_params=None, override_page_numbers=None) -> Generator[LTTextContainer, Any, None]:
