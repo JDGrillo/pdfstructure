@@ -90,19 +90,22 @@ class FileSource(Source):
         wrapper.page = container.page
         stack = []
         for line in container:
-            size = max([obj.size for obj in itertools.islice(line, 10) if isinstance(obj, LTChar)])
-            if not stack:
-                wrapper.add(line)
-                stack.append(size)
-            else:
-                prior = stack.pop()
-                stack.append(size)
-                diff = abs(prior - size)
-                if diff != 0 and max(prior, size) / min(prior, size) > 1.15:
-                    # break paragraph
-                    yield wrapper
-                    wrapper = LTTextBoxHorizontal()
-                wrapper.add(line)
+            try:
+                size = max([obj.size for obj in itertools.islice(line, 10) if isinstance(obj, LTChar)])
+                if not stack:
+                    wrapper.add(line)
+                    stack.append(size)
+                else:
+                    prior = stack.pop()
+                    stack.append(size)
+                    diff = abs(prior - size)
+                    if diff != 0 and max(prior, size) / min(prior, size) > 1.15:
+                        # break paragraph
+                        yield wrapper
+                        wrapper = LTTextBoxHorizontal()
+                    wrapper.add(line)
+            except Exception as e:
+                print("exception in split_boxes_by_style:", e)
         yield wrapper
 
     def read(self, override_la_params=None, override_page_numbers=None) -> Generator[LTTextContainer, Any, None]:
